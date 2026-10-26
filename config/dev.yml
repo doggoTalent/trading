@@ -1,0 +1,17 @@
+# config/dev.yml
+# Override for local testing.
+# launch: APP_ENV=dev python -m screener
+
+scanner:
+  min_quote_volume: 10_000_000
+  min_growth_pct: 10.0
+  min_natr_pct: 3.0
+  concurrency: 5
+
+executor:
+  max_positions: 20
+  risk_per_trade_pct: 0.1 
+
+logging:
+  level: DEBUG
+  json_output: false

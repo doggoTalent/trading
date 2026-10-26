@@ -1,0 +1,45 @@
+# config/base.yml
+# Base params. dev.yml / prod.yml overwrites it
+
+exchange:
+  id: binance
+  market_type: future         # spot | future | swap
+  rate_limit: true
+  timeout_ms: 15000
+
+scanner:
+  scan_tf: 1h                 # Scanner TF (restart)
+  lookback: 24                # Bars for growth% growth: 6 × 4h = 24h
+  min_growth_pct: 5.0         # Growth after lookback, %
+  min_natr_pct: 2.0           # ATR(14)/close × 100, %
+  min_quote_volume: 5_000_000 # USDT volume for 24h
+  concurrency: 10             # Parallel fetch_ohlcv
+  ohlcv_limit: 200            # Bars per quiery (≥ lookback + 20)
+  exclude_bases: [USDC, FDUSD, TUSD, DAI, BUSD]
+  exclude_suffixes: [UP, DOWN, BULL, BEAR, 3L, 3S]
+
+watchlist:
+  ttl_hours: 24              # Expiration term
+  max_size: 30               # Watchlist hardcap
+  max_price_drift_pct: 8.0   # Price drift (filters too volatile)
+
+executor:
+  entry_tf: 5m               # Entry TF, must be < scan_tf (restart)
+  max_positions: 5           # Simulteniously open trades
+  risk_per_trade_pct: 1.0    # Risk per trade, % equity
+  max_daily_loss_pct: 3.0    # Daily loss limit, % equity
+  order_timeout_sec: 30
+  ohlcv_limit: 200
+
+risk:
+  max_exposure_per_symbol_pct: 2.0  # Max position volume, % equity
+  kill_switch_drawdown_pct: 10.0    # Kill switch for drawdown, %
+
+logging:
+  level: INFO                # DEBUG | INFO | WARNING | ERROR
+  json_output: true          # JSONL in data/logs/, false — for local debugging
+
+# TODO:
+strategy:
+  name: placeholder
+  params: {}
