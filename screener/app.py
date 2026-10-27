@@ -41,6 +41,22 @@ async def main() -> None:
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, stop.set)
 
+    # === WARMUP RUN ===
+    log.info("running warmup scan...")
+    conn = await db.connect()
+    try:
+        added = await scanner.scan_once(
+            ex, conn, cfg.scanner, cfg.watchlist.ttl_hours
+        )
+        await heartbeat.beat(conn, "screener", meta=f"warmup={len(added)}")
+        log.info("warmup scan done", added=len(added))
+    except Exception:
+        log.exception("warmup scan failed")
+    finally:
+        await conn.close()
+    # ==================
+
+    # === MAIN LOOP ===
     try:
         while not stop.is_set():
             target = next_bar_close(cfg.scanner.scan_tf)
@@ -69,3 +85,4 @@ async def main() -> None:
     finally:
         await ex.close()
         log.info("screener stopped")
+    # ================

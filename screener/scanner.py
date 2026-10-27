@@ -10,6 +10,7 @@ import pandas as pd
 
 from shared.config import ScannerCfg
 from shared.watchlist import upsert_from_scan
+from shared.exchange import fetch_ohlcv_cached
 
 log = structlog.get_logger(__name__)
 
@@ -89,18 +90,16 @@ async def _check_symbol(
     """Returns (symbol, features, price) if passed filters or None."""
     async with sem:
         try:
-            ohlcv = await ex.fetch_ohlcv(symbol, cfg.scan_tf, limit=cfg.ohlcv_limit)
+            df_raw = await fetch_ohlcv_cached(ex, symbol, cfg.scan_tf, cfg.ohlcv_limit)
         except Exception as e:
             log.warning("fetch_ohlcv failed", symbol=symbol, error=str(e))
             return None
 
-    if not ohlcv or len(ohlcv) < cfg.lookback + 20:
+    if df_raw.empty or len(df_raw) < cfg.lookback + 20:
         return None
 
-    # Ignoring last bar
-    df = pd.DataFrame(
-        ohlcv, columns=["ts", "open", "high", "low", "close", "volume"]
-    ).iloc[:-1]
+    df = df_raw.iloc[:-1].reset_index(drop=True)
+
     feats = compute_features(df, cfg.lookback)
     if feats is None or not passes(feats, cfg):
         return None
